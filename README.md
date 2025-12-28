@@ -35,6 +35,8 @@ When working in the CRUD frame:
 
 Each frame has clear success criteria, and when completed, produces a summary that sibling frames can reference without inheriting the full exploration history.
 
+> **Note:** This plugin is designed for long-running, multi-step tasks where context management matters. For quick one-off questions or simple edits, the overhead of frame management may get in the way. Consider disabling it for short sessions.
+
 ## Installation
 
 ### Prerequisites
@@ -139,6 +141,7 @@ rm -rf .opencode/stack/
 |----------|-------------|
 | [SPEC.md](./SPEC.md) | Theoretical framework and design rationale |
 | [IMPLEMENTATION.md](./IMPLEMENTATION.md) | Technical implementation details |
+| [NEXT_STEPS.md](./NEXT_STEPS.md) | Future directions |
 
 ## Status
 
@@ -155,4 +158,4 @@ If you find value in the approach, consider it a starting point for your own imp
 
 ## License
 
-MIT
+[MIT](./LICENSE)
