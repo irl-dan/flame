@@ -58,12 +58,20 @@ interface FrameMetadata {
   sessionID: string            // OpenCode session ID
   parentSessionID?: string     // Parent frame (undefined for root)
   status: FrameStatus          // Current lifecycle status
-  goal: string                 // Frame purpose/objective
+
+  // Identity (set at creation, immutable)
+  title: string                // Short name (2-5 words)
+  successCriteria: string      // What defines "done"
+  successCriteriaCompacted: string  // Dense version for display
+
+  // Results (set on completion)
+  results?: string             // What was accomplished
+  resultsCompacted?: string    // Dense version for context
+
   createdAt: number
   updatedAt: number
   artifacts: string[]          // Files/resources produced
   decisions: string[]          // Key decisions recorded
-  compactionSummary?: string   // Summary from compaction
   logPath?: string             // Path to exported log
 
   // Phase 1.6: Planning fields
@@ -107,9 +115,9 @@ interface RuntimeState {
 ### Phase 1.0-1.1: Core Frame Management
 
 **FrameStateManager** class provides:
-- `createFrame(sessionID, goal, parentSessionID?)` - Create new frame
-- `updateFrameStatus(sessionID, status, summary?)` - Update status
-- `completeFrame(sessionID, status, summary?)` - Complete and return parent
+- `createFrame(sessionID, title, successCriteria, successCriteriaCompacted, parentSessionID?)` - Create new frame
+- `updateFrameStatus(sessionID, status, results?, resultsCompacted?)` - Update status with results
+- `completeFrame(sessionID, status, results?, resultsCompacted?)` - Complete and return parent
 - `getFrame(sessionID)` - Retrieve frame by ID
 - `getActiveFrame()` - Get currently active frame
 - `getAncestors(sessionID)` - Get parent chain to root
@@ -317,10 +325,11 @@ Customizes compaction prompts:
 
 | Tool | Description |
 |------|-------------|
-| `flame_push` | Create child frame for subtask |
-| `flame_pop` | Complete frame and return to parent |
+| `flame_push` | Create child frame with title/successCriteria |
+| `flame_pop` | Complete frame with status/results |
 | `flame_status` | Show frame tree with status |
-| `flame_set_goal` | Update current frame's goal |
+| `flame_tree` | ASCII visualization of frame tree |
+| `flame_frame_details` | View full frame metadata |
 | `flame_add_artifact` | Record produced artifact |
 | `flame_add_decision` | Record key decision |
 
@@ -379,39 +388,52 @@ Customizes compaction prompts:
 
 ```xml
 <flame-context session="abc12345">
+  <flame-task-management>
+    <philosophy>
+      FLAME TOOLS ARE YOUR PRIMARY TASK MANAGEMENT SYSTEM.
+      Do NOT use TodoWrite. Use flame_push/flame_pop/flame_plan_children instead.
+    </philosophy>
+
+    <current-frame>
+      <title>Current subtask</title>
+      <success-criteria>Complete the implementation of X</success-criteria>
+      <status>in_progress</status>
+    </current-frame>
+
+    <rules>
+      <rule>COMPLETE your current frame's success criteria before starting siblings</rule>
+      <rule>Call flame_pop with results/resultsCompacted when done</rule>
+      <rule>Work DEPTH-FIRST: finish children before moving to siblings</rule>
+      <rule>CREATE child frames for any significant sub-work (don't cram)</rule>
+      <rule>NEVER use TodoWrite - flame tools replace it entirely</rule>
+    </rules>
+  </flame-task-management>
+
   <metadata>
     <budget total="4000" ancestors="1500" siblings="1500" current="800" />
-    <truncation ancestors-omitted="2" siblings-filtered="3" />
   </metadata>
 
-  <ancestors count="2" omitted="1">
+  <ancestors count="2">
     <frame id="root1234" status="in_progress">
-      <goal>Main project task</goal>
-      <summary>Working on feature X...</summary>
+      <title>Main project task</title>
+      <success-criteria>Build complete application</success-criteria>
       <artifacts>src/foo.ts, src/bar.ts</artifacts>
-    </frame>
-    <frame id="parent12" status="completed">
-      <goal>Implement sub-feature</goal>
-      <summary truncated="true">Completed implementation of...</summary>
     </frame>
   </ancestors>
 
-  <completed-siblings count="1" filtered="2">
+  <completed-siblings count="1">
     <frame id="sibling1" status="completed">
-      <goal>Related task</goal>
-      <summary>Finished related work...</summary>
+      <title>Related task</title>
+      <results>Finished related work...</results>
     </frame>
   </completed-siblings>
 
   <current-frame id="abc12345" status="in_progress">
-    <goal>Current subtask</goal>
+    <title>Current subtask</title>
+    <success-criteria>Implementation requirements</success-criteria>
     <artifacts>src/current.ts</artifacts>
-    <decisions>Using approach A because...</decisions>
   </current-frame>
 </flame-context>
-
-<!-- Flame Autonomy Suggestions -->
-[FLAME SUGGESTION: Consider pushing a new frame for "refactor auth" - Reason: context switch (75% confidence)]
 ```
 
 ## Helper Functions
